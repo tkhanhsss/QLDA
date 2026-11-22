@@ -1,4 +1,4 @@
-"""Run the M5 task lifecycle through LangGraph and the MessageBus."""
+"""Run the task lifecycle through LangGraph and the MessageBus."""
 
 import json
 import os
@@ -18,6 +18,7 @@ from agents.base import (
     parse_backlog,
     redact_api_key,
 )
+from agents.designer import Designer
 from agents.reviewer import Reviewer
 from agents.tester import Tester
 from core.message_bus import MessageBus
@@ -84,6 +85,7 @@ class TaskWorkflow:
         self.publish(Agent.USER, Agent.PM, MsgType.REQUIREMENT, requirements)
         self.product = {"PRODUCT REQUIREMENTS": bus.inbox(Agent.PM)[-1].content}
         self.pm = LLMAgent(Agent.PM)
+        self.designer = Designer()
         self.coder = LLMAgent(Agent.CODER)
         self.reviewer = Reviewer()
         self.tester = Tester()
@@ -135,7 +137,7 @@ class TaskWorkflow:
         }
 
     def assign(self, state: RunState) -> dict:
-        """Ask PM to brief the next task. M5 goes directly to Coder."""
+        """Ask PM to brief the Coder and, for UI tasks, the Designer."""
         self.workspace.begin_task()
         tree = "\n".join(_source_files(self.workspace.root)) or "(empty)"
         status = "\n".join(
@@ -148,14 +150,41 @@ class TaskWorkflow:
             "PROJECT STATE": f"{status or 'No tasks closed in this run.'}\nWorkspace files:\n{tree}",
         }, mode="ASSIGN")
         self.publish(Agent.PM, Agent.CODER, MsgType.TASK_ASSIGN, result.text, state=state, usage=result)
+        needs_ui = self.task(state)["needs_ui"]
+        if needs_ui:
+            self.publish(Agent.PM, Agent.DESIGNER, MsgType.TASK_ASSIGN, result.text, state=state)
         return {
-            "next_step": "code",
+            "next_step": "design" if needs_ui else "code",
             "statuses": {**state["statuses"], self.task_id(state): "IN_PROGRESS"},
         }
+
+    def design(self, state: RunState) -> dict:
+        """Record a single validated specification before the Coder starts."""
+        result = self.designer.run(self.task_sections(state))
+        content = redact_api_key(result.text)
+        logs = self.bus.db_path.parent
+        directory = logs / "artifacts" / self.task_id(state)
+        directory.mkdir(parents=True, exist_ok=True)
+        artifact = directory / "design_spec.md"
+        try:
+            with artifact.open("x", encoding="utf-8") as file:
+                file.write(content)
+        except FileExistsError:
+            artifact = directory / state["run_id"] / artifact.name
+            artifact.parent.mkdir(exist_ok=True)
+            with artifact.open("x", encoding="utf-8") as file:
+                file.write(content)
+        self.publish(
+            Agent.DESIGNER, Agent.CODER, MsgType.DESIGN_SPEC, content, state=state,
+            usage=result, artifacts=[f"{logs.name}/{artifact.relative_to(logs).as_posix()}"],
+        )
+        return {"next_step": "code"}
 
     def code(self, state: RunState) -> dict:
         """Read the assignment and any revision request, then apply the submission."""
         sections = self.task_sections(state)
+        if self.task(state)["needs_ui"]:
+            sections["DESIGN SPEC"] = self.history(state, MsgType.DESIGN_SPEC)[-1].content
         sources = _source_files(self.workspace.root)
         sections["PROJECT FILES"] = _file_blocks(sources) or "(empty workspace)"
         if state["iteration"]:
@@ -405,7 +434,8 @@ def run_project(
 
     graph = StateGraph(RunState)
     edges = {
-        "assign": ["code"],
+        "assign": ["design", "code"],
+        "design": ["code"],
         "code": ["review"],
         "review": ["code", "write_tests", "test"],
         "write_tests": ["test"],
@@ -427,7 +457,7 @@ def run_project(
     }
     try:
         return graph.compile().invoke(
-            initial, config={"recursion_limit": len(backlog) * (3 * MAX_REVISIONS + 8)},
+            initial, config={"recursion_limit": len(backlog) * (3 * MAX_REVISIONS + 9)},
         )["statuses"]
     finally:
         workspace.finish_task(keep_changes=False)

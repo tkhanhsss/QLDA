@@ -1,0 +1,212 @@
+Exit code: 1
+============================= test session starts =============================
+platform win32 -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0
+rootdir: C:\Users\Tung Khanh Luong\Desktop\QLDA\workspace
+configfile: pytest.ini
+plugins: anyio-4.16.0, langsmith-0.16.0
+collected 9 items
+
+tests\test_T01.py ....F...F                                              [100%]
+
+================================== FAILURES ===================================
+_____ test_pytest_invocation_finds_app_without_pythonpath[pytest-command] _____
+
+command = ['pytest']
+
+    @pytest.mark.parametrize(
+        "command",
+        [
+            ["pytest"],
+            [sys.executable, "-m", "pytest"],
+        ],
+        ids=["pytest-command", "python-module"],
+    )
+    def test_pytest_invocation_finds_app_without_pythonpath(command):
+        environment = os.environ.copy()
+        environment.pop("PYTHONPATH", None)
+>       result = subprocess.run(
+            command + ["tests/test_T01.py::test_health_returns_ok", "-q"],
+            cwd=ROOT,
+            env=environment,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+
+tests\test_T01.py:76: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\TUNGKH~1\AppData\Local\Temp\qlda-m0-da22e310-7535-450d-b176-b722c77cdc81\python\cpython-3.13.18-windows-x86_64-none\Lib\subprocess.py:555: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\TUNGKH~1\AppData\Local\Temp\qlda-m0-da22e310-7535-450d-b176-b722c77cdc81\python\cpython-3.13.18-windows-x86_64-none\Lib\subprocess.py:1040: in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: None args: ['pytest', 'tests/test_T01.py::test_health_re...>
+args = 'pytest tests/test_T01.py::test_health_returns_ok -q', executable = None
+preexec_fn = None, close_fds = False, pass_fds = ()
+cwd = 'C:\\Users\\Tung Khanh Luong\\Desktop\\QLDA\\workspace'
+env = {'ALLUSERSPROFILE': 'C:\\ProgramData', 'APPDATA': 'C:\\Users\\Tung Khanh Luong\\AppData\\Roaming', 'APPLICATION_INSIGHTS_NO_STATSBEAT': 'true', 'CHROME_CRASHPAD_PIPE_NAME': '\\\\.\\pipe\\crashpad_9584_IENUIFVFUOGGDILK', ...}
+startupinfo = <subprocess.STARTUPINFO object at 0x00000262C15E3E00>
+creationflags = 0, shell = False, p2cread = Handle(608), p2cwrite = -1
+c2pread = 11, c2pwrite = Handle(176), errread = 12, errwrite = Handle(728)
+unused_restore_signals = True, unused_gid = None, unused_gids = None
+unused_uid = None, unused_umask = -1, unused_start_new_session = False
+unused_process_group = -1
+
+    def _execute_child(self, args, executable, preexec_fn, close_fds,
+                       pass_fds, cwd, env,
+                       startupinfo, creationflags, shell,
+                       p2cread, p2cwrite,
+                       c2pread, c2pwrite,
+                       errread, errwrite,
+                       unused_restore_signals,
+                       unused_gid, unused_gids, unused_uid,
+                       unused_umask,
+                       unused_start_new_session, unused_process_group):
+        """Execute program (MS Windows version)"""
+    
+        assert not pass_fds, "pass_fds not supported on Windows."
+    
+        if isinstance(args, str):
+            pass
+        elif isinstance(args, bytes):
+            if shell:
+                raise TypeError('bytes args is not allowed on Windows')
+            args = list2cmdline([args])
+        elif isinstance(args, os.PathLike):
+            if shell:
+                raise TypeError('path-like args is not allowed when '
+                                'shell is true')
+            args = list2cmdline([args])
+        else:
+            args = list2cmdline(args)
+    
+        if executable is not None:
+            executable = os.fsdecode(executable)
+    
+        # Process startup details
+        if startupinfo is None:
+            startupinfo = STARTUPINFO()
+        else:
+            # bpo-34044: Copy STARTUPINFO since it is modified above,
+            # so the caller can reuse it multiple times.
+            startupinfo = startupinfo.copy()
+    
+        use_std_handles = -1 not in (p2cread, c2pwrite, errwrite)
+        if use_std_handles:
+            startupinfo.dwFlags |= _winapi.STARTF_USESTDHANDLES
+            startupinfo.hStdInput = p2cread
+            startupinfo.hStdOutput = c2pwrite
+            startupinfo.hStdError = errwrite
+    
+        attribute_list = startupinfo.lpAttributeList
+        have_handle_list = bool(attribute_list and
+                                "handle_list" in attribute_list and
+                                attribute_list["handle_list"])
+    
+        # If we were given an handle_list or need to create one
+        if have_handle_list or (use_std_handles and close_fds):
+            if attribute_list is None:
+                attribute_list = startupinfo.lpAttributeList = {}
+            handle_list = attribute_list["handle_list"] = \
+                list(attribute_list.get("handle_list", []))
+    
+            if use_std_handles:
+                handle_list += [int(p2cread), int(c2pwrite), int(errwrite)]
+    
+            handle_list[:] = self._filter_handle_list(handle_list)
+    
+            if handle_list:
+                if not close_fds:
+                    warnings.warn("startupinfo.lpAttributeList['handle_list'] "
+                                  "overriding close_fds", RuntimeWarning)
+    
+                # When using the handle_list we always request to inherit
+                # handles but the only handles that will be inherited are
+                # the ones in the handle_list
+                close_fds = False
+    
+        if shell:
+            startupinfo.dwFlags |= _winapi.STARTF_USESHOWWINDOW
+            startupinfo.wShowWindow = _winapi.SW_HIDE
+            if not executable:
+                # gh-101283: without a fully-qualified path, before Windows
+                # checks the system directories, it first looks in the
+                # application directory, and also the current directory if
+                # NeedCurrentDirectoryForExePathW(ExeName) is true, so try
+                # to avoid executing unqualified "cmd.exe".
+                comspec = os.environ.get('ComSpec')
+                if not comspec:
+                    system_root = os.environ.get('SystemRoot', '')
+                    comspec = os.path.join(system_root, 'System32', 'cmd.exe')
+                    if not os.path.isabs(comspec):
+                        raise FileNotFoundError('shell not found: neither %ComSpec% nor %SystemRoot% is set')
+                if os.path.isabs(comspec):
+                    executable = comspec
+            else:
+                comspec = executable
+    
+            args = '{} /c "{}"'.format (comspec, args)
+    
+        if cwd is not None:
+            cwd = os.fsdecode(cwd)
+    
+        sys.audit("subprocess.Popen", executable, args, cwd, env)
+    
+        # Start the process
+        try:
+>           hp, ht, pid, tid = _winapi.CreateProcess(executable, args,
+                                     # no special security
+                                     None, None,
+                                     int(not close_fds),
+                                     creationflags,
+                                     env,
+                                     cwd,
+                                     startupinfo)
+E                                    FileNotFoundError: [WinError 2] The system cannot find the file specified
+
+C:\Users\TUNGKH~1\AppData\Local\Temp\qlda-m0-da22e310-7535-450d-b176-b722c77cdc81\python\cpython-3.13.18-windows-x86_64-none\Lib\subprocess.py:1555: FileNotFoundError
+__________________________ test_project_passes_ruff ___________________________
+
+    def test_project_passes_ruff():
+        executable = shutil.which("ruff")
+        command = [executable] if executable else [sys.executable, "-m", "ruff"]
+        result = subprocess.run(
+            command + ["check", "."],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+    
+>       assert result.returncode == 0, result.stdout + result.stderr
+E       AssertionError: FURB162 Unnecessary timezone replacement with zero offset
+E           --> tests\test_T02.py:18:28
+E            |
+E         16 |     assert isinstance(task["created_at"], str)
+E         17 |     assert task["created_at"]
+E         18 |     datetime.fromisoformat(task["created_at"].replace("Z", "+00:00"))
+E            |                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E         help: Remove `.replace()` call
+E            |
+E         17 |     assert task["created_at"]
+E            -     datetime.fromisoformat(task["created_at"].replace("Z", "+00:00"))
+E         18 +     datetime.fromisoformat(task["created_at"])
+E         19 |
+E            |
+E         note: This is an unsafe fix and may change runtime behavior
+E         
+E         Found 1 error.
+E         1 unsafe fix available with `--fix --unsafe-fixes`.
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['C:\\Users\\Tung Khanh Luong\\Desktop\\QLDA\\.venv\\Scripts\\python.exe', '-m', 'ruff', 'check'...x and may change runtime behavior\n\nFound 1 error.\n1 unsafe fix available with `--fix --unsafe-fixes`.\n', stderr='').returncode
+
+tests\test_T01.py:152: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_T01.py::test_pytest_invocation_finds_app_without_pythonpath[pytest-command]
+FAILED tests/test_T01.py::test_project_passes_ruff - AssertionError: FURB162 ...
+========================= 2 failed, 7 passed in 2.43s =========================

@@ -8,7 +8,7 @@ Your output is parsed by a program, so the output format below is strict.
 - `## TASK BRIEF` — objective and notes from the PM.
 - `## ACCEPTANCE CRITERIA` — what must be true when the task is done.
 - `## PRODUCT REQUIREMENTS` — the full requirements document. It is the source of truth for names, status codes, validation rules and constraints.
-- `## DESIGN SPEC` — optional. Present only for tasks with a UI. Implement it exactly.
+- `## DESIGN SPEC` — optional. Present on every round of a UI task. Implement it exactly, including the layout, states, accessibility, and exact element ids and Vietnamese text. Keep these ids unchanged in revisions.
 - `## PROJECT FILES` — the current file tree and the contents of the existing source files.
 - `## FEEDBACK` — optional. Present when you are revising. It contains the Reviewer's issues or the Tester's failure report, and the iteration number.
 

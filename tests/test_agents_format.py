@@ -25,8 +25,10 @@ WRITE_TESTS = {
 }
 REPORT = {"TASK": "T01", "TASK TESTS": "Exit code: 1", "FULL SUITE": "Exit code: 1"}
 DESIGN = (
-    "## Overview\nA clean page.\n## Layout\nOne column.\n## Components\nA form.\n"
-    "## Visual style\nSystem fonts.\n## States and behavior\nDisplay errors.\n"
+    "## Overview\nQuản lý công việc.\n## Layout\nOne column.\n## Components\n"
+    "`task-form`, `task-input`, `task-list`, `filter-all`, `filter-todo`, `filter-done`, "
+    "`search-input`, Thêm.\n"
+    "## Visual style\nSystem fonts.\n## States and behavior\nChưa có công việc nào.\n"
     "## Responsive behavior\nUse the full width.\n## Accessibility\nLabel controls."
 )
 BRIEF = (

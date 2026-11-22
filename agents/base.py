@@ -38,6 +38,18 @@ DESIGN_HEADINGS = (
     "Overview", "Layout", "Components", "Visual style", "States and behavior",
     "Responsive behavior", "Accessibility",
 )
+DESIGN_IDS = (
+    "task-form", "task-input", "task-list", "filter-all", "filter-todo", "filter-done",
+    "search-input",
+)
+DESIGN_TEXTS = ("Quản lý công việc", "Thêm", "Chưa có công việc nào")
+DESIGN_HEADING = re.compile(r"^[ \t]{0,3}#{1,6}(?=[ \t]|$)", re.MULTILINE)
+DESIGN_CODE = re.compile(
+    r"^[ \t]*(?:`{3,}|~{3,})|<\/?[a-z][\w:-]*(?:\s[^<>]*)?\s*/?>|<!doctype\b|"
+    r"\{[^{}\n]*:[^{}\n]*\}|\b(?:const|let|var)\s+[\w$]+\s*=|"
+    r"\b(?:document|window)\.[\w$]+\s*\(|\bfunction\s*[\w$]*\s*\(|=>",
+    re.IGNORECASE | re.MULTILINE,
+)
 ASSIGN_HEADINGS = ("Objective", "Acceptance criteria", "Notes for the team")
 REVIEW_ISSUE = re.compile(r"^- \[[^\]\n]+:[1-9][0-9]*\][ \t]+\S", re.MULTILINE)
 JSON_BLOCK = re.compile(r"```json[ \t]*\n(.*?)\n```", re.DOTALL)
@@ -91,6 +103,23 @@ def _headings(text: str, expected: tuple[str, ...]) -> str:
     actual = re.findall(r"^##[ \t]+(.+)$", text, re.MULTILINE)
     if actual != list(expected):
         raise ValueError("Expected headings in this order: " + ", ".join(expected) + ".")
+    return text
+
+
+def _parse_design(text: str) -> str:
+    _headings(text, DESIGN_HEADINGS)
+    if len(DESIGN_HEADING.findall(text)) != len(DESIGN_HEADINGS):
+        raise ValueError("Use exactly the seven required headings. Use bold labels for components.")
+    if len(re.findall(r"\b\w+(?:[-’']\w+)*\b", text)) > 450:
+        raise ValueError("The design specification must have at most 450 words.")
+    if DESIGN_CODE.search(text):
+        raise ValueError("Describe the design in Markdown without HTML, CSS or JavaScript code.")
+    missing = [
+        item for item in (*DESIGN_IDS, *DESIGN_TEXTS)
+        if not re.search(rf"(?<![\w-]){re.escape(item)}(?![\w-])", text)
+    ]
+    if missing:
+        raise ValueError("Missing required exact element ids or Vietnamese texts: " + ", ".join(missing) + ".")
     return text
 
 
@@ -173,7 +202,7 @@ def _parse_output(
             raise ValueError("REQUEST_CHANGES requires at least one issue like - [file:42] description.")
         return verdict
     if role == Role.DESIGNER:
-        return _headings(text, DESIGN_HEADINGS)
+        return _parse_design(text)
     if role == Role.PM:
         return _parse_pm(text, mode)
     return _parse_tester(text, mode, task_id, create_fixture)

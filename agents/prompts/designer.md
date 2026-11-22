@@ -21,7 +21,7 @@ Markdown with exactly these headings, in this order:
 <structure of the page from top to bottom: header, form, filter bar, list. Widths, alignment, spacing>
 
 ## Components
-<one subsection per component: purpose, exact element id, exact visible text, size, states>
+<one bold label or bullet per component: purpose, exact element id, exact visible text, size, states>
 
 ## Visual style
 <table of design tokens: page background, card background, text color, muted text color, primary color, danger color, border color, font stack, base font size, border radius, spacing unit>
@@ -43,5 +43,5 @@ Markdown with exactly these headings, in this order:
 - Give colors as hex values. Text must have a contrast ratio of at least 4.5:1 with its background.
 - Keep the design simple: one centered column, maximum width about 600px, generous spacing, one primary color.
 - Every interactive element must have a visible focus state.
-- Maximum 450 words. Do not write HTML, CSS or JavaScript code. Tables of values are fine.
+- Maximum 450 words, including the headings. Use only the seven headings above. Do not write HTML, CSS or JavaScript code. Tables of values and inline Markdown for identifiers and values are fine.
 - Do not add features that are not in the requirements.
