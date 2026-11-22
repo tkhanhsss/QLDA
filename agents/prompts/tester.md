@@ -20,7 +20,7 @@ The first line of the input is `MODE: WRITE_TESTS` or `MODE: REPORT`. Follow onl
 - `## FEEDBACK` — optional. Present when your previous test file had an error. Fix exactly that error.
 
 ### Output format
-Return only file blocks, nothing else:
+Return exactly one file block for the current task, with no surrounding text:
 
 ~~~
 ### FILE: tests/test_T03.py
@@ -30,11 +30,11 @@ Return only file blocks, nothing else:
 ~~~
 
 - Always output `tests/test_<task_id>.py` (for example `tests/test_T03.py`).
-- Output `tests/conftest.py` only when it does not exist yet (the first task) or when the feedback says it is broken. Never output or change test files of earlier tasks.
+- This response is limited to the current task test file. Never output shared fixtures or test files of earlier tasks in this response.
 - Paths are relative, use forward slashes. Files must be complete, with no placeholders.
 
 ### Standard `conftest.py`
-When you must create it, use this fixture. It gives every test its own empty database:
+The shared fixture has this contract. It gives every test its own empty database:
 
 ```python
 import pytest

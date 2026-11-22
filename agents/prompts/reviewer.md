@@ -44,7 +44,7 @@ Naming preferences, formatting that `ruff` accepts, comments, minor refactors, o
 ## Rules
 - Review only what this task is about. Do not review the Tester's work.
 - Check every acceptance criterion one by one against the code before deciding.
-- Maximum 8 issues. Each issue must be specific: file, line (or function name), the problem, and the fix. Never write vague remarks such as "improve error handling".
+- Maximum 8 issues. Each issue must be specific: file, positive line number, the problem, and the fix. Never write vague remarks such as "improve error handling".
 - If `## PREVIOUS FEEDBACK` is present, first check whether each earlier issue was fixed. Do not invent new minor issues in later rounds; only report problems that really block approval.
 - If a file you need to judge is not shown, say so in one line instead of guessing.
 - Do not write code. Describe the fix in words.
