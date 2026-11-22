@@ -93,8 +93,9 @@ def _first_line(text: str, *choices: str) -> str:
     return line
 
 
-def _parse_backlog(text: str) -> list[dict[str, object]]:
-    block = JSON_BLOCK.fullmatch(text)
+def parse_backlog(text: str) -> list[dict[str, object]]:
+    """Validate the PM's fenced backlog and return the ordered tasks."""
+    block = JSON_BLOCK.fullmatch(text.replace("\r\n", "\n").rstrip("\n"))
     if block is None:
         raise ValueError("Expected exactly one fenced json block containing the backlog.")
     try:
@@ -125,7 +126,7 @@ def _parse_backlog(text: str) -> list[dict[str, object]]:
 
 def _parse_pm(text: str, mode: str | None) -> ParsedOutput:
     if mode == "PLAN":
-        return _parse_backlog(text)
+        return parse_backlog(text)
     if mode == "ASSIGN":
         return _headings(text, ASSIGN_HEADINGS)
     return _first_line(text, "DECISION: DONE", "DECISION: BLOCKED")

@@ -1,13 +1,28 @@
-"""Run the M0 connectivity check and send one prompt to 9Router."""
+"""Check 9Router and run milestone M4 from the command line."""
+
+import argparse
+import sqlite3
+from collections.abc import Sequence
+from datetime import UTC, datetime
+from pathlib import Path
+from subprocess import CalledProcessError
 
 from rich.console import Console
 
-from core.llm import LLMError, chat, check_router
+from agents.base import AgentFormatError, redact_api_key
+from core.llm import LLMError, check_router
+from core.message_bus import MessageBus
+from core.orchestrator import TASK_ID, run_t01
+from core.workspace import Workspace
 
 
-def main() -> int:
-    """Check the router and display the demo response and token counts."""
-    console = Console()
+def main(argv: Sequence[str] | None = None) -> int:
+    """Run T01 after a successful router connectivity check."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--requirement", type=Path, default=Path("requirements.md"))
+    parser.add_argument("--only", choices=[TASK_ID], default=TASK_ID)
+    args = parser.parse_args(argv)
+
     errors = Console(stderr=True)
     try:
         check_router()
@@ -15,22 +30,24 @@ def main() -> int:
         errors.print(f"{error}\nHãy chạy 9Router và kiểm tra .env.", markup=False)
         return 1
 
+    run_id = datetime.now(UTC).strftime("%Y%m%dT%H%M%S.%fZ")
+    Console().print(f"Run ID: {run_id}")
     try:
-        result = chat("pm", "Answer briefly in plain text.", "What is 2 + 2?")
+        requirements = args.requirement.read_text(encoding="utf-8")
+        run_t01(requirements, MessageBus(run_id), Workspace())
     except LLMError as error:
         errors.print(
             f"{error}\nHãy kiểm tra tên model, API key và hạn mức trong dashboard 9Router.",
             markup=False,
         )
         return 1
-
-    tokens_in = result.tokens_in if result.tokens_in is not None else "không có dữ liệu"
-    tokens_out = (
-        result.tokens_out if result.tokens_out is not None else "không có dữ liệu"
-    )
-    console.print(result.text, markup=False, highlight=False)
-    console.print(f"Model: {result.model}", markup=False)
-    console.print(f"Token vào: {tokens_in} | Token ra: {tokens_out}")
+    except CalledProcessError as error:
+        detail = (error.stderr or error.stdout or str(error)).strip()
+        errors.print(f"Git trong workspace thất bại.\n{redact_api_key(detail)}", markup=False)
+        return 1
+    except (AgentFormatError, OSError, ValueError, sqlite3.Error) as error:
+        errors.print(redact_api_key(str(error)), markup=False)
+        return 1
     return 0
 
 

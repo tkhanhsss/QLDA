@@ -28,6 +28,7 @@ Return only file blocks. Each block starts with a line `### FILE: <relative path
 
 - Output only the files you create or change. Files you do not output stay as they are.
 - Every file must be complete. Never write placeholders such as `...`, `# rest unchanged` or `# TODO`.
+- Inside a Markdown file, use indented code blocks for command examples so triple backticks only delimit the outer FILE block.
 - Paths are relative to the workspace root, use forward slashes, and never contain `..` or start with `/`.
 - You may write at most 3 plain lines before the first file block, starting with `NOTE:`, for something the team must know (for example, a conflict between two requirements). Do not write any other text outside the file blocks.
 
