@@ -80,6 +80,31 @@ class Workspace:
             raise ValueError(f"Workspace root must be a regular directory: {root}")
         self.root = root.resolve()
         self.root.mkdir(parents=True, exist_ok=True)
+        self._task_originals: dict[Path, bytes | None] | None = None
+
+    def begin_task(self) -> None:
+        """Track the original content of files this task writes."""
+        self._task_originals = {}
+
+    def finish_task(self, *, keep_changes: bool) -> None:
+        """Restore only this task's writes when it could not pass."""
+        if not keep_changes and self._task_originals is not None:
+            for target, original in self._task_originals.items():
+                if target.resolve() != target:
+                    raise ValueError(f"Cannot restore a redirected workspace file: {target.name}")
+                if original is None:
+                    target.unlink(missing_ok=True)
+                else:
+                    self._replace(target, original)
+        self._task_originals = None
+
+    @staticmethod
+    def _replace(target: Path, content: bytes) -> None:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        with TemporaryDirectory(dir=target.parent) as temporary:
+            temporary_path = Path(temporary) / "file"
+            temporary_path.write_bytes(content)
+            temporary_path.replace(target)
 
     def _target(self, path: str, agent: Agent) -> Path:
         """Validate both the supplied path and its resolved destination."""
@@ -100,11 +125,9 @@ class Workspace:
             targets[target] = content
 
         for target, content in targets.items():
-            target.parent.mkdir(parents=True, exist_ok=True)
-            with TemporaryDirectory(dir=target.parent) as temporary:
-                temporary_path = Path(temporary) / "file"
-                temporary_path.write_text(content, encoding="utf-8", newline="\n")
-                temporary_path.replace(target)
+            if self._task_originals is not None and target not in self._task_originals:
+                self._task_originals[target] = target.read_bytes() if target.exists() else None
+            self._replace(target, content.encode("utf-8"))
 
     def run(self, cmd: Sequence[str], timeout: float = 60) -> subprocess.CompletedProcess[str]:
         """Run an allowlisted argument vector and capture its result."""
@@ -117,7 +140,9 @@ class Workspace:
         command = "python -m" if python_module else args[0]
         if not math.isfinite(timeout) or timeout <= 0:
             raise ValueError("Command timeout must be a positive number of seconds.")
-        if args[0] in {"pytest", "ruff"}:
+        if args[0] == "pytest":
+            args = [sys.executable, "-B", "-m", *args]
+        elif args[0] == "ruff":
             args = [sys.executable, "-m", *args]
         elif args[0] == "python":
             args[0] = sys.executable
@@ -135,13 +160,23 @@ class Workspace:
     def run_pytest(self, path: str = "tests/") -> subprocess.CompletedProcess[str]:
         """Run pytest for a workspace-relative path with a 60-second limit."""
         target = self._target(path, Agent.TESTER).relative_to(self.root)
-        return self.run(["pytest", "--", target.as_posix()], timeout=60)
+        command = ["pytest", "-p", "no:cacheprovider", "--", target.as_posix()]
+        try:
+            return self.run(command, timeout=60)
+        except TimeoutError as error:
+            timeout = error.__cause__
+            if not isinstance(timeout, subprocess.TimeoutExpired):
+                raise
+            output = (timeout.stdout or b"").decode("utf-8", errors="replace")
+            stderr = (timeout.stderr or b"").decode("utf-8", errors="replace")
+            return subprocess.CompletedProcess(command, 124, output, f"{stderr}\n{error}\n")
 
-    def run_ruff(self) -> subprocess.CompletedProcess[str]:
-        """Run Ruff over the workspace."""
-        return self.run(["ruff", "check", "."])
+    def run_ruff(self, *, include_tests: bool = True) -> subprocess.CompletedProcess[str]:
+        """Run Ruff, optionally excluding the Tester-owned files from review."""
+        options = [] if include_tests else ["--extend-exclude", "tests"]
+        return self.run(["ruff", "check", "--no-cache", *options, "."])
 
-    def git_commit(self, msg: str) -> subprocess.CompletedProcess[str]:
+    def git_commit(self, msg: str, *, allow_empty: bool = False) -> subprocess.CompletedProcess[str]:
         """Initialize a local Git repository if needed, then stage and commit."""
         git_dir = self.root / ".git"
         if git_dir.resolve() != git_dir or (git_dir.exists() and not git_dir.is_dir()):
@@ -152,6 +187,7 @@ class Workspace:
             initialized.check_returncode()
         staged = self.run([*git, "add", "-A"])
         staged.check_returncode()
-        committed = self.run([*git, "commit", "-m", msg])
+        options = ["--allow-empty"] if allow_empty else []
+        committed = self.run([*git, "commit", *options, "-m", msg])
         committed.check_returncode()
         return committed

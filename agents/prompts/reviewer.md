@@ -8,7 +8,7 @@ Your decision is parsed by a program, so the output format below is strict.
 - `## TASK BRIEF` and `## ACCEPTANCE CRITERIA` — what the task must deliver.
 - `## PRODUCT REQUIREMENTS` — the full requirements, the source of truth.
 - `## CHANGED FILES` — the full content of the files changed in this round.
-- `## RUFF OUTPUT` — the real output and exit code of `ruff check` run on the workspace. This is a fact, not an opinion.
+- `## RUFF OUTPUT` — the real output and exit code of `ruff check` run on the workspace's product files. This is a fact, not an opinion.
 - `## PREVIOUS FEEDBACK` — optional. Present from the second round on: the issues you reported before.
 
 ## Output format

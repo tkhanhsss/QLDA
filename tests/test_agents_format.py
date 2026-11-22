@@ -108,7 +108,7 @@ def test_retries_invalid_formats_then_reports_reason(
     with pytest.raises(AgentFormatError, match=reason) as error:
         agent.run(sections, mode=mode, task_id="T01" if mode == "WRITE_TESTS" else None)
     assert chat.call_count == 3
-    assert error.value.usage.tokens_in == 10
+    assert error.value.usage.tokens_in == 30
     first, second, third = [call.args[2] for call in chat.call_args_list]
     assert first == agent.build_input(sections, mode=mode)
     assert second == third

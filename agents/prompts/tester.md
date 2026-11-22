@@ -20,7 +20,7 @@ The first line of the input is `MODE: WRITE_TESTS` or `MODE: REPORT`. Follow onl
 - `## FEEDBACK` — optional. Present when your previous test file had an error. Fix exactly that error.
 
 ### Output format
-Return exactly one file block for the current task, with no surrounding text:
+Return the current task's file block first, with no surrounding text:
 
 ~~~
 ### FILE: tests/test_T03.py
@@ -30,7 +30,8 @@ Return exactly one file block for the current task, with no surrounding text:
 ~~~
 
 - Always output `tests/test_<task_id>.py` (for example `tests/test_T03.py`).
-- This response is limited to the current task test file. Never output shared fixtures or test files of earlier tasks in this response.
+- If EXISTING TESTS says `tests/conftest.py` is missing, also return a second file block for `tests/conftest.py` using the standard fixture below.
+- If the shared fixture already exists, return only the current task's file block. Never output test files of earlier tasks.
 - Paths are relative, use forward slashes. Files must be complete, with no placeholders.
 
 ### Standard `conftest.py`
@@ -52,6 +53,7 @@ def client(tmp_path, monkeypatch):
 
 ### Rules for writing tests
 - Use `pytest` and the `client` fixture. Use only HTTP calls through the client. Do not import or call internal functions of the application, and do not read the code.
+- For T01, when the acceptance criteria explicitly require project files such as requirements.txt or README.md, you may check those files without reading application source. Use only as many tests as the T01 criteria warrant.
 - Derive every test from the acceptance criteria and the requirements: the happy path, each validation rule, boundary values (for example a title of exactly 100 and of 101 characters), the 404 cases, and the response ordering.
 - Test names describe the behavior, for example `test_create_task_rejects_whitespace_title`.
 - Each test is independent. It creates its own data through the API. No test depends on another test, on execution order, on time, on randomness or on the network. No `sleep`.

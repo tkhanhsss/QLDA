@@ -6,6 +6,7 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass
 from pathlib import Path
+from subprocess import CompletedProcess
 
 from core import llm
 from core.schema import Agent as Role
@@ -48,7 +49,7 @@ ParsedOutput = str | dict[str, str] | list[dict[str, object]]
 
 @dataclass(frozen=True)
 class AgentUsage:
-    """Router metadata for the last reply, including on format failure."""
+    """Router metadata across replies, including format retries."""
 
     model: str
     tokens_in: int | None
@@ -77,6 +78,13 @@ def redact_api_key(text: str) -> str:
     """Hide the configured key in text destined for logs or the terminal."""
     key = os.getenv("ROUTER_API_KEY", "").strip()
     return text.replace(key, "[redacted]") if key else text
+
+
+def command_output(result: CompletedProcess[str]) -> str:
+    """Format the exit code and both output streams for an agent."""
+    return redact_api_key(
+        f"Exit code: {result.returncode}\n{result.stdout}{result.stderr}"
+    ).rstrip()
 
 
 def _headings(text: str, expected: tuple[str, ...]) -> str:
@@ -132,12 +140,18 @@ def _parse_pm(text: str, mode: str | None) -> ParsedOutput:
     return _first_line(text, "DECISION: DONE", "DECISION: BLOCKED")
 
 
-def _parse_tester(text: str, mode: str | None, task_id: str | None) -> ParsedOutput:
+def _parse_tester(
+    text: str, mode: str | None, task_id: str | None, create_fixture: bool
+) -> ParsedOutput:
     if mode == "WRITE_TESTS":
         expected = f"tests/test_{task_id}.py"
         files = parse_files(text, Role.TESTER)
-        if list(files) != [expected] or text.partition("\n")[0] != f"### FILE: {expected}":
-            raise ValueError(f"Expected only one FILE block for {expected}.")
+        paths = [expected, "tests/conftest.py"] if create_fixture else [expected]
+        if list(files) != paths or text.partition("\n")[0] != f"### FILE: {expected}":
+            raise ValueError(
+                f"Expected FILE blocks in this order: {', '.join(paths)}."
+                if create_fixture else f"Expected only one FILE block for {expected}."
+            )
         return files
     result = _first_line(text, "RESULT: PASS", "RESULT: FAIL")
     if result == "RESULT: FAIL":
@@ -148,7 +162,7 @@ def _parse_tester(text: str, mode: str | None, task_id: str | None) -> ParsedOut
 
 
 def _parse_output(
-    role: Role, text: str, mode: str | None, task_id: str | None
+    role: Role, text: str, mode: str | None, task_id: str | None, create_fixture: bool
 ) -> ParsedOutput:
     if role == Role.CODER:
         notes = CODER_NOTES.match(text)
@@ -162,7 +176,7 @@ def _parse_output(
         return _headings(text, DESIGN_HEADINGS)
     if role == Role.PM:
         return _parse_pm(text, mode)
-    return _parse_tester(text, mode, task_id)
+    return _parse_tester(text, mode, task_id, create_fixture)
 
 
 class Agent:
@@ -194,24 +208,43 @@ class Agent:
         return "\n\n".join(blocks)
 
     def run(
-        self, sections: Mapping[str, str], *, mode: str | None = None, task_id: str | None = None
+        self,
+        sections: Mapping[str, str],
+        *,
+        mode: str | None = None,
+        task_id: str | None = None,
+        create_fixture: bool = False,
+        expected_first_line: str | None = None,
     ) -> AgentResult:
         """Call 9Router, retry invalid formats, and return the validated reply."""
         original = self.build_input(sections, mode=mode)
         if self.role == Role.TESTER and mode == "WRITE_TESTS" and not TASK_ID.fullmatch(task_id or ""):
             raise ValueError("WRITE_TESTS requires a task_id such as T01.")
         user_prompt = original
+        tokens_in: list[int] = []
+        tokens_out: list[int] = []
+        duration_ms = 0
         for attempt in range(MAX_FORMAT_RETRIES + 1):
             try:
                 reply = llm.chat(self.role.value, self.system_prompt, user_prompt)
             except llm.LLMError as error:
                 raise llm.LLMError(redact_api_key(str(error))) from None
+            if reply.tokens_in is not None:
+                tokens_in.append(reply.tokens_in)
+            if reply.tokens_out is not None:
+                tokens_out.append(reply.tokens_out)
+            duration_ms += reply.duration_ms
             usage = AgentUsage(
-                redact_api_key(reply.model), reply.tokens_in, reply.tokens_out, reply.duration_ms
+                redact_api_key(reply.model),
+                sum(tokens_in) if tokens_in else None,
+                sum(tokens_out) if tokens_out else None,
+                duration_ms,
             )
             normalized = reply.text.replace("\r\n", "\n").rstrip("\n")
             try:
-                parsed = _parse_output(self.role, normalized, mode, task_id)
+                parsed = _parse_output(self.role, normalized, mode, task_id, create_fixture)
+                if expected_first_line is not None:
+                    _first_line(normalized, expected_first_line)
             except (ValueError, TypeError) as error:
                 reason = redact_api_key(str(error))
                 if attempt == MAX_FORMAT_RETRIES:

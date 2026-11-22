@@ -81,7 +81,7 @@ def test_retry_uses_exact_instruction_and_returns_metadata(monkeypatch: pytest.M
     ]
     assert (result.text, result.parsed) == (text, "VERDICT: APPROVE")
     assert (result.model, result.tokens_in, result.tokens_out, result.duration_ms) == (
-        "mock/fallback", 30, None, 20,
+        "mock/fallback", 35, 2, 30,
     )
 
 
