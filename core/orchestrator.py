@@ -264,10 +264,16 @@ class TaskWorkflow:
             existing_tests=f"{names or '(no test files)'}\n\n{fixture_context}",
             create_fixture=create_fixture, feedback=feedback or None,
         )
-        files = cast(dict[str, str], result.parsed)
+        submitted = cast(dict[str, str], result.parsed)
+        files = {name: self.workspace.sort_test_imports(name, source) for name, source in submitted.items()}
+        sorted_imports = [name for name in files if files[name] != submitted[name]]
+        content = result.text
+        if sorted_imports:
+            content = "\n".join(f"### FILE: {name}\n```python\n{source}```" for name, source in files.items())
         self.publish(
-            Agent.TESTER, Agent.ORCHESTRATOR, MsgType.CODE_SUBMIT, result.text, state=state,
+            Agent.TESTER, Agent.ORCHESTRATOR, MsgType.CODE_SUBMIT, content, state=state,
             usage=result, artifacts=[f"workspace/{name}" for name in files],
+            meta={"sorted_imports": sorted_imports} if sorted_imports else None,
         )
         self.workspace.write_files(files, agent=Agent.TESTER)
         return {"tests_written": True, "next_step": "test"}

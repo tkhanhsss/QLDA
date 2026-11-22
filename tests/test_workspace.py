@@ -137,6 +137,15 @@ def test_pytest_and_ruff_run_in_workspace(workspace: Workspace) -> None:
     assert workspace.run_ruff().returncode == 0
 
 
+def test_sort_test_imports_formats_source_without_writing_workspace(workspace: Workspace) -> None:
+    name = "tests/test_T01.py"
+    source = "from pathlib import Path\nimport re\n\nFILES = Path('.')\n"
+    expected = "import re\nfrom pathlib import Path\n\nFILES = Path('.')\n"
+
+    assert workspace.sort_test_imports(name, source) == expected
+    assert not (workspace.root / name).exists()
+
+
 def test_git_commit_initializes_and_stages_before_commit(workspace: Workspace) -> None:
     result = subprocess.CompletedProcess(args=[], returncode=0)
     git = ["git", "--git-dir=.git", "--work-tree=."]

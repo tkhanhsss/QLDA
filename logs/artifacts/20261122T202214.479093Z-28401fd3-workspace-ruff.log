@@ -1,0 +1,20 @@
+Ruff workspace/ exit code: 1
+I001 [*] Import block is un-sorted or un-formatted
+ --> tests\test_T01.py:1:1
+  |
+1 | / import configparser
+2 | | from pathlib import Path
+3 | | import re
+  | |_________^
+help: Organize imports
+  |
+1 | import configparser
+  - from pathlib import Path
+2 | import re
+  -
+3 + from pathlib import Path
+4 |
+  |
+
+Found 1 error.
+[*] 1 fixable with `--fix`.

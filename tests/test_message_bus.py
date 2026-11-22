@@ -130,6 +130,18 @@ def test_queries_are_scoped_to_a_run_and_export_keeps_all_runs(tmp_path: Path) -
     assert other_bus.export_transcript() == expected
     assert transcript_path.read_text(encoding="utf-8") == expected
 
+    lines = expected.splitlines(keepends=True)
+    scoped = bus.export_transcript(run_id="run-1")
+    assert scoped == lines[0] + lines[2]
+    scoped_path = tmp_path / "transcript_run-1.md"
+    assert scoped_path.read_text(encoding="utf-8") == scoped
+    assert bus.export_transcript(run_id="run-1") == scoped
+    assert transcript_path.read_text(encoding="utf-8") == expected
+    with pytest.raises(ValueError, match="run_id"):
+        bus.export_transcript(run_id="../run-1")
+    with pytest.raises(ValueError, match="No messages"):
+        bus.export_transcript(run_id="missing")
+
 
 def test_failed_commit_rolls_back_all_logs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch

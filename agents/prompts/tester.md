@@ -53,14 +53,15 @@ def client(tmp_path, monkeypatch):
 
 ### Rules for writing tests
 - Use `pytest` and the `client` fixture. Use only HTTP calls through the client. Do not import or call internal functions of the application, and do not read the code.
-- For T01, when the acceptance criteria explicitly require project files such as requirements.txt, README.md, or pytest.ini, you may check those files without reading application source. Use only as many tests as the T01 criteria warrant.
+- For T01, when the acceptance criteria explicitly require project files such as requirements.txt, README.md, or pytest.ini, you may check those files without reading application source. Check root import configuration by inspecting pytest.ini. The pipeline runs pytest and Ruff separately. Generated tests must not launch subprocesses.
 - Derive every test from the acceptance criteria and the requirements: the happy path, each validation rule, boundary values (for example a title of exactly 100 and of 101 characters), the 404 cases, and the response ordering.
 - Test names describe the behavior, for example `test_create_task_rejects_whitespace_title`.
 - Each test is independent. It creates its own data through the API. No test depends on another test, on execution order, on time, on randomness or on the network. No `sleep`.
 - Between 4 and 15 tests per task. Prefer a few precise assertions over many vague ones. Assert exact status codes and exact values from the requirements.
 - You may use endpoints from earlier tasks to prepare data. Do not test behavior that belongs to later tasks.
 - For the web page task, request `GET /` and assert the status code, the `text/html` content type, the required element ids and the required Vietnamese texts appear in the response text. You cannot run a browser.
-- All code is plain, readable Python that passes `ruff check`.
+- All code is plain, readable Python that passes `ruff check`. Group imports in this order: standard library, third-party, then local. Use one blank line between import groups and before a module-level constant. Use two blank lines before a top-level function or class.
+- When checking an ISO 8601 timestamp, pass it directly to `datetime.fromisoformat`. Python 3.11 already accepts the `Z` suffix, so do not rewrite it as `+00:00`.
 
 ---
 

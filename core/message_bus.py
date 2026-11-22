@@ -1,6 +1,7 @@
 """Persist and query messages shared by the agents in a run."""
 
 import json
+import re
 import sqlite3
 from contextlib import closing
 from datetime import UTC, datetime
@@ -156,8 +157,24 @@ class MessageBus:
             )
             return [_row_to_message(row) for row in rows]
 
-    def export_transcript(self) -> str:
-        """Rebuild the shared transcript from SQLite and return its text."""
+    def export_transcript(self, run_id: str | None = None) -> str:
+        """Export one run to its own file or rebuild the shared transcript."""
+        if run_id is not None:
+            if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]+)*", run_id):
+                raise ValueError("Invalid run_id for a transcript filename.")
+            with closing(self._connect()) as connection:
+                rows = connection.execute("SELECT * FROM messages WHERE run_id = ? ORDER BY id", (run_id,))
+                text = "".join(format_entry(_row_to_message(row)) + "\n" for row in rows)
+            if not text:
+                raise ValueError(f"No messages found for run_id {run_id!r}.")
+            path = self.transcript_path.with_name(f"transcript_{run_id}.md")
+            try:
+                with path.open("x", encoding="utf-8", newline="\n") as transcript:
+                    transcript.write(text)
+            except FileExistsError:
+                if path.read_text(encoding="utf-8") != text:
+                    raise
+            return text
         with closing(self._connect()) as connection, connection:
             connection.execute("BEGIN IMMEDIATE")
             rows = connection.execute("SELECT * FROM messages ORDER BY id")

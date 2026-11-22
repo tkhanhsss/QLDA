@@ -142,7 +142,9 @@ class Workspace:
                 self._task_originals[target] = target.read_bytes() if target.exists() else None
             self._replace(target, content.encode("utf-8"))
 
-    def run(self, cmd: Sequence[str], timeout: float = 60) -> subprocess.CompletedProcess[str]:
+    def run(
+        self, cmd: Sequence[str], timeout: float = 60, *, input_text: str | None = None,
+    ) -> subprocess.CompletedProcess[str]:
         """Run an allowlisted argument vector and capture its result."""
         if isinstance(cmd, str) or not cmd:
             raise ValueError("Pass a nonempty argument list to Workspace.run().")
@@ -163,7 +165,7 @@ class Workspace:
         try:
             return subprocess.run(
                 args, cwd=self.root, shell=False, check=False, timeout=timeout,
-                capture_output=True, encoding="utf-8", errors="replace",
+                input=input_text, capture_output=True, encoding="utf-8", errors="replace",
             )
         except subprocess.TimeoutExpired as error:
             raise TimeoutError(
@@ -188,6 +190,17 @@ class Workspace:
         """Run Ruff, optionally excluding the Tester-owned files from review."""
         options = [] if include_tests else ["--extend-exclude", "tests"]
         return self.run(["ruff", "check", "--no-cache", *options, "."])
+
+    def sort_test_imports(self, name: str, source: str) -> str:
+        """Apply Ruff's import-order fix to a Tester reply before writing it."""
+        target = self._target(name, Agent.TESTER).relative_to(self.root).as_posix()
+        result = self.run(
+            ["ruff", "check", "--fix-only", "--select", "I001", "--no-cache",
+             "--stdin-filename", target, "-"],
+            input_text=source,
+        )
+        # Leave invalid source to the existing pytest and Tester repair flow.
+        return result.stdout if result.returncode == 0 else source
 
     def git_commit(self, msg: str, *, allow_empty: bool = False) -> subprocess.CompletedProcess[str]:
         """Initialize a local Git repository if needed, then stage and commit."""

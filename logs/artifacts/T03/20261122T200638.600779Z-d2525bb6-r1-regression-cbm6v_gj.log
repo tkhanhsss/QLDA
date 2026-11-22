@@ -1,0 +1,17 @@
+Exit code: 0
+============================= test session starts =============================
+platform win32 -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0
+rootdir: C:\Users\Tung Khanh Luong\Desktop\QLDA\workspace
+configfile: pytest.ini
+plugins: anyio-4.16.0, langsmith-0.16.0
+collected 66 items
+
+tests\test_T01.py .....                                                  [  7%]
+tests\test_T02.py .............                                          [ 27%]
+tests\test_T03.py ......                                                 [ 36%]
+tests\test_T04.py ..............                                         [ 57%]
+tests\test_T05.py .....                                                  [ 65%]
+tests\test_T06.py ...............                                        [ 87%]
+tests\test_T07.py ........                                               [100%]
+
+============================= 66 passed in 1.35s ==============================
