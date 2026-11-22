@@ -43,6 +43,8 @@ Naming preferences, formatting that `ruff` accepts, comments, minor refactors, o
 
 ## Rules
 - Review only what this task is about. Do not review the Tester's work.
+- The workspace may already contain working features from later tasks when an earlier task is rerun. Keep those features. If CHANGED FILES marks files as unchanged review context, do not treat their contents as new features in this submission.
+- For a configuration- or documentation-only change in an existing project, review the submitted changes against the relevant criteria. The Tester verifies existing behavior in the regression suite. Do not request application files merely because they were omitted from a configuration-only submission.
 - Check every acceptance criterion one by one against the code before deciding.
 - Maximum 8 issues. Each issue must be specific: file, positive line number, the problem, and the fix. Never write vague remarks such as "improve error handling".
 - If `## PREVIOUS FEEDBACK` is present, first check whether each earlier issue was fixed. Do not invent new minor issues in later rounds; only report problems that really block approval.

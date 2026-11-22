@@ -1,0 +1,377 @@
+Exit code: 1
+============================= test session starts =============================
+platform win32 -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0
+rootdir: C:\Users\Tung Khanh Luong\Desktop\QLDA\workspace
+configfile: pytest.ini
+plugins: anyio-4.16.0, langsmith-0.16.0
+collected 21 items
+
+tests\test_T01.py ....                                                   [ 19%]
+tests\test_T02.py FFFFFFFFFFF                                            [ 71%]
+tests\test_T03.py FFFFFF                                                 [100%]
+
+================================== FAILURES ===================================
+____________ test_create_task_returns_required_fields_and_defaults ____________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE862FD0>
+
+    def test_create_task_returns_required_fields_and_defaults(client):
+        response = client.post("/tasks", json={"title": "Buy milk"})
+    
+>       assert response.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T02.py:9: AssertionError
+________ test_create_task_accepts_and_trims_valid_titles[trim-spaces] _________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8639D0>
+title = '  Buy milk  ', expected = 'Buy milk'
+
+    @pytest.mark.parametrize(
+        ("title", "expected"),
+        [
+            ("  Buy milk  ", "Buy milk"),
+            ("  x  ", "x"),
+            ("  " + "a" * 100 + "  ", "a" * 100),
+        ],
+        ids=["trim-spaces", "one-character", "100-characters-after-trimming"],
+    )
+    def test_create_task_accepts_and_trims_valid_titles(client, title, expected):
+        response = client.post("/tasks", json={"title": title})
+    
+>       assert response.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T02.py:33: AssertionError
+_______ test_create_task_accepts_and_trims_valid_titles[one-character] ________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE7C2060>
+title = '  x  ', expected = 'x'
+
+    @pytest.mark.parametrize(
+        ("title", "expected"),
+        [
+            ("  Buy milk  ", "Buy milk"),
+            ("  x  ", "x"),
+            ("  " + "a" * 100 + "  ", "a" * 100),
+        ],
+        ids=["trim-spaces", "one-character", "100-characters-after-trimming"],
+    )
+    def test_create_task_accepts_and_trims_valid_titles(client, title, expected):
+        response = client.post("/tasks", json={"title": title})
+    
+>       assert response.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T02.py:33: AssertionError
+_ test_create_task_accepts_and_trims_valid_titles[100-characters-after-trimming] _
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE7C36F0>
+title = '  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  '
+expected = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+    @pytest.mark.parametrize(
+        ("title", "expected"),
+        [
+            ("  Buy milk  ", "Buy milk"),
+            ("  x  ", "x"),
+            ("  " + "a" * 100 + "  ", "a" * 100),
+        ],
+        ids=["trim-spaces", "one-character", "100-characters-after-trimming"],
+    )
+    def test_create_task_accepts_and_trims_valid_titles(client, title, expected):
+        response = client.post("/tasks", json={"title": title})
+    
+>       assert response.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T02.py:33: AssertionError
+_ test_create_task_rejects_invalid_title_with_default_validation_detail[missing-title] _
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8B0830>
+payload = {}
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {},
+            {"title": ""},
+            {"title": " \t\n "},
+            {"title": "  " + "a" * 101 + "  "},
+        ],
+        ids=["missing-title", "empty-title", "whitespace-title", "101-character-title"],
+    )
+    def test_create_task_rejects_invalid_title_with_default_validation_detail(
+        client, payload
+    ):
+        response = client.post("/tasks", json=payload)
+    
+>       assert response.status_code == 422
+E       assert 404 == 422
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T02.py:53: AssertionError
+_ test_create_task_rejects_invalid_title_with_default_validation_detail[empty-title] _
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE823CE0>
+payload = {'title': ''}
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {},
+            {"title": ""},
+            {"title": " \t\n "},
+            {"title": "  " + "a" * 101 + "  "},
+        ],
+        ids=["missing-title", "empty-title", "whitespace-title", "101-character-title"],
+    )
+    def test_create_task_rejects_invalid_title_with_default_validation_detail(
+        client, payload
+    ):
+        response = client.post("/tasks", json=payload)
+    
+>       assert response.status_code == 422
+E       assert 404 == 422
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T02.py:53: AssertionError
+_ test_create_task_rejects_invalid_title_with_default_validation_detail[whitespace-title] _
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8E9150>
+payload = {'title': ' \t\n '}
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {},
+            {"title": ""},
+            {"title": " \t\n "},
+            {"title": "  " + "a" * 101 + "  "},
+        ],
+        ids=["missing-title", "empty-title", "whitespace-title", "101-character-title"],
+    )
+    def test_create_task_rejects_invalid_title_with_default_validation_detail(
+        client, payload
+    ):
+        response = client.post("/tasks", json=payload)
+    
+>       assert response.status_code == 422
+E       assert 404 == 422
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T02.py:53: AssertionError
+_ test_create_task_rejects_invalid_title_with_default_validation_detail[101-character-title] _
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8EA360>
+payload = {'title': '  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  '}
+
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {},
+            {"title": ""},
+            {"title": " \t\n "},
+            {"title": "  " + "a" * 101 + "  "},
+        ],
+        ids=["missing-title", "empty-title", "whitespace-title", "101-character-title"],
+    )
+    def test_create_task_rejects_invalid_title_with_default_validation_detail(
+        client, payload
+    ):
+        response = client.post("/tasks", json=payload)
+    
+>       assert response.status_code == 422
+E       assert 404 == 422
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T02.py:53: AssertionError
+______________ test_create_tasks_assigns_increasing_integer_ids _______________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8E96A0>
+
+    def test_create_tasks_assigns_increasing_integer_ids(client):
+        ids = []
+        for title in ["First task", "Second task", "Third task"]:
+            response = client.post("/tasks", json={"title": title})
+>           assert response.status_code == 201
+E           assert 404 == 201
+E            +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T02.py:71: AssertionError
+__ test_connections_use_current_database_path_and_preserve_existing_database __
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8E99D0>
+tmp_path = WindowsPath('C:/Users/Tung Khanh Luong/AppData/Local/Temp/pytest-of-Tung Khanh Luong/pytest-23/test_connections_use_current_d0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000027CDE893E70>
+
+    def test_connections_use_current_database_path_and_preserve_existing_database(
+        client, tmp_path, monkeypatch
+    ):
+        first_path = tmp_path / "first.db"
+        second_path = tmp_path / "second.db"
+    
+        monkeypatch.setenv("TODO_DB_PATH", str(first_path))
+        first = client.post("/tasks", json={"title": "First database task"})
+>       assert first.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T02.py:88: AssertionError
+________ test_connections_default_to_todo_db_when_environment_is_unset ________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8EA360>
+tmp_path = WindowsPath('C:/Users/Tung Khanh Luong/AppData/Local/Temp/pytest-of-Tung Khanh Luong/pytest-23/test_connections_default_to_to0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000027CDE902C30>
+
+    def test_connections_default_to_todo_db_when_environment_is_unset(
+        client, tmp_path, monkeypatch
+    ):
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("TODO_DB_PATH", raising=False)
+    
+        first = client.post("/tasks", json={"title": "Default database task"})
+>       assert first.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+C:\Users\Tung Khanh Luong\Desktop\QLDA\workspace\tests\test_T02.py:109: AssertionError
+____________ test_list_tasks_returns_empty_list_for_empty_database ____________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8EA470>
+
+    def test_list_tasks_returns_empty_list_for_empty_database(client):
+        response = client.get("/tasks")
+    
+>       assert response.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T03.py:19: AssertionError
+_____________ test_list_tasks_returns_all_tasks_highest_id_first ______________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8E9040>
+
+    def test_list_tasks_returns_all_tasks_highest_id_first(client):
+        created = [
+>           create_task(client, "First task"),
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            create_task(client, "Second task"),
+            create_task(client, "Third task"),
+        ]
+
+tests\test_T03.py:25: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8E9040>
+title = 'First task'
+
+    def create_task(client, title):
+        response = client.post("/tasks", json={"title": title})
+>       assert response.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T03.py:3: AssertionError
+_________________ test_get_task_returns_requested_stored_task _________________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8EB8A0>
+
+    def test_get_task_returns_requested_stored_task(client):
+>       first = create_task(client, "First task")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_T03.py:42: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8EB8A0>
+title = 'First task'
+
+    def create_task(client, title):
+        response = client.post("/tasks", json={"title": title})
+>       assert response.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T03.py:3: AssertionError
+__________ test_get_unknown_task_returns_not_found_on_empty_database __________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8EB790>
+
+    def test_get_unknown_task_returns_not_found_on_empty_database(client):
+        response = client.get("/tasks/1")
+    
+        assert response.status_code == 404
+>       assert response.json() == {"detail": "Task not found"}
+E       AssertionError: assert {'detail': 'Not Found'} == {'detail': 'Task not found'}
+E         
+E         Differing items:
+E         {'detail': 'Not Found'} != {'detail': 'Task not found'}
+E         Use -v to get more diff
+
+tests\test_T03.py:56: AssertionError
+___________ test_get_unknown_task_does_not_return_an_existing_task ____________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8EB570>
+
+    def test_get_unknown_task_does_not_return_an_existing_task(client):
+>       stored = create_task(client, "Existing task")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_T03.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8EB570>
+title = 'Existing task'
+
+    def create_task(client, title):
+        response = client.post("/tasks", json={"title": title})
+>       assert response.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T03.py:3: AssertionError
+__________ test_reads_preserve_trimmed_unicode_title_and_created_at ___________
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8EBDF0>
+
+    def test_reads_preserve_trimmed_unicode_title_and_created_at(client):
+>       stored = create_task(client, "  Mua sữa và đọc sách  ")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_T03.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+client = <starlette.testclient.TestClient object at 0x0000027CDE8EBDF0>
+title = '  Mua sữa và đọc sách  '
+
+    def create_task(client, title):
+        response = client.post("/tasks", json={"title": title})
+>       assert response.status_code == 201
+E       assert 404 == 201
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests\test_T03.py:3: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_T02.py::test_create_task_returns_required_fields_and_defaults
+FAILED tests/test_T02.py::test_create_task_accepts_and_trims_valid_titles[trim-spaces]
+FAILED tests/test_T02.py::test_create_task_accepts_and_trims_valid_titles[one-character]
+FAILED tests/test_T02.py::test_create_task_accepts_and_trims_valid_titles[100-characters-after-trimming]
+FAILED tests/test_T02.py::test_create_task_rejects_invalid_title_with_default_validation_detail[missing-title]
+FAILED tests/test_T02.py::test_create_task_rejects_invalid_title_with_default_validation_detail[empty-title]
+FAILED tests/test_T02.py::test_create_task_rejects_invalid_title_with_default_validation_detail[whitespace-title]
+FAILED tests/test_T02.py::test_create_task_rejects_invalid_title_with_default_validation_detail[101-character-title]
+FAILED tests/test_T02.py::test_create_tasks_assigns_increasing_integer_ids - ...
+FAILED tests/test_T02.py::test_connections_use_current_database_path_and_preserve_existing_database
+FAILED tests/test_T02.py::test_connections_default_to_todo_db_when_environment_is_unset
+FAILED tests/test_T03.py::test_list_tasks_returns_empty_list_for_empty_database
+FAILED tests/test_T03.py::test_list_tasks_returns_all_tasks_highest_id_first
+FAILED tests/test_T03.py::test_get_task_returns_requested_stored_task - asser...
+FAILED tests/test_T03.py::test_get_unknown_task_returns_not_found_on_empty_database
+FAILED tests/test_T03.py::test_get_unknown_task_does_not_return_an_existing_task
+FAILED tests/test_T03.py::test_reads_preserve_trimmed_unicode_title_and_created_at
+======================== 17 failed, 4 passed in 0.29s =========================

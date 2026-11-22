@@ -26,7 +26,7 @@ Return only file blocks. Each block starts with a line `### FILE: <relative path
 ```
 ~~~
 
-- Output only the files you create or change. Files you do not output stay as they are.
+- Output only the files you create or change. If the Reviewer asks for existing files as context, resubmit the current task's changed files together with the requested existing files so they can be reviewed together. Keep context files unchanged unless they also need a fix.
 - Every file must be complete. Never write placeholders such as `...`, `# rest unchanged` or `# TODO`.
 - Inside a Markdown file, use indented code blocks for command examples so triple backticks only delimit the outer FILE block.
 - Paths are relative to the workspace root, use forward slashes, and never contain `..` or start with `/`.
@@ -37,7 +37,8 @@ Return only file blocks. Each block starts with a line `### FILE: <relative path
 ### Scope
 - Implement only the current task. Do not implement features of later tasks and do not add features that are not in the requirements.
 - **Never create or modify anything under `tests/`.** The Tester owns that folder. The tests you cannot see are written from the acceptance criteria, so follow the acceptance criteria and the requirements literally (exact status codes, exact field names, exact texts).
-- Never break what earlier tasks built. The Tester runs the full test suite after every task.
+- Preserve existing product behavior, even when the current task is an earlier task being rerun in a workspace that already has later features. Do not replace working modules or endpoints with skeletons. The Tester runs the full test suite after every task.
+- When rerunning T01 and its application files already satisfy the skeleton and health-check requirements, leave them as they are. For example, adding the required pytest configuration does not require recreating the application skeleton or database modules.
 
 ### Technical
 - Follow the tech constraints and the testability rules in the product requirements. In particular: read the database path from `TODO_DB_PATH` each time a connection is opened, run `CREATE TABLE IF NOT EXISTS` when opening a connection, and do not create files or connect to the database at import time.

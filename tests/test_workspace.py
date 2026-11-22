@@ -94,6 +94,20 @@ def test_tester_can_write_tests(workspace: Workspace) -> None:
     assert (workspace.root / "tests" / "test_T01.py").is_file()
 
 
+def test_review_context_and_rollback_use_pre_task_content(workspace: Workspace) -> None:
+    original = {"app/main.py": "VALUE = 1\n"}
+    revision = {"app/main.py": "VALUE = 2\n", "pytest.ini": "[pytest]\npythonpath = .\n"}
+    workspace.write_files(original)
+    workspace.begin_task()
+    assert workspace.unchanged_files(original) == ["app/main.py"]
+    workspace.write_files(revision)
+    assert workspace.unchanged_files(revision) == []
+    assert workspace.unchanged_files(original) == ["app/main.py"]
+    workspace.finish_task(keep_changes=False)
+    assert (workspace.root / "app/main.py").read_text(encoding="utf-8") == original["app/main.py"]
+    assert not (workspace.root / "pytest.ini").exists()
+
+
 @pytest.mark.parametrize("cmd", [["cmd", "/c", "dir"], ["python", "-c", "pass"], ["python"]])
 def test_run_rejects_commands_outside_allowlist(workspace: Workspace, cmd: list[str]) -> None:
     with pytest.raises(ValueError, match="Command not allowed"):

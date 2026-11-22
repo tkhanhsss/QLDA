@@ -25,7 +25,7 @@ from core.schema import Agent, Message, MsgType
 from core.workspace import Workspace
 
 MAX_REVISIONS = 3
-SOURCE_EXTENSIONS = {".py", ".md", ".txt", ".toml", ".html", ".css", ".js", ".json", ".sql"}
+SOURCE_EXTENSIONS = {".py", ".md", ".txt", ".toml", ".ini", ".html", ".css", ".js", ".json", ".sql"}
 TEST_FAILURE = re.compile(
     r"^(?:FAILED|ERROR) (tests/[\w/]+\.py(?:::[\w]+)*)\b", re.MULTILINE
 )
@@ -92,20 +92,21 @@ class TaskWorkflow:
         self, sender: Agent, to: Agent, kind: MsgType, content: str, *,
         state: RunState | None = None, status: str | None = None,
         usage: AgentUsage | None = None, artifacts: list[str] | None = None,
+        meta: dict[str, object] | None = None,
     ) -> Message:
         """Publish a message with its task, revision, and router metadata."""
-        meta = {}
+        metadata = dict(meta or {})
         if usage:
-            meta = {
+            metadata.update({
                 "model": usage.model, "tokens_in": usage.tokens_in,
                 "tokens_out": usage.tokens_out, "duration_ms": usage.duration_ms,
-            }
+            })
         return self.bus.publish(Message(
             run_id=state["run_id"] if state else self.bus.run_id,
             task_id=self.task_id(state) if state else None,
             iteration=state["iteration"] if state else 0,
             sender=sender, to=to, type=kind, status=status,
-            content=redact_api_key(content), artifacts=artifacts or [], meta=meta,
+            content=redact_api_key(content), artifacts=artifacts or [], meta=metadata,
         ))
 
     def plan(self) -> list[dict[str, object]]:
@@ -165,6 +166,7 @@ class TaskWorkflow:
         self.publish(
             Agent.CODER, Agent.REVIEWER, MsgType.CODE_SUBMIT, result.text, state=state,
             usage=result, artifacts=[f"workspace/{name}" for name in files],
+            meta={"unchanged_files": self.workspace.unchanged_files(files)},
         )
         self.workspace.write_files(files, agent=Agent.CODER)
         return {"next_step": "review"}
@@ -184,8 +186,15 @@ class TaskWorkflow:
         submission = self.history(state, MsgType.CODE_SUBMIT)[-1]
         previous = [m for m in self.history(state, MsgType.REVIEW_RESULT)
                     if m.status == "REQUEST_CHANGES"]
+        changes = submission.content
+        unchanged = submission.meta.get("unchanged_files", [])
+        if unchanged:
+            changes = (
+                "These submitted files match the workspace at the start of this task and are review "
+                f"context only: {', '.join(unchanged)}.\n\n{changes}"
+            )
         result = self.reviewer.review(
-            self.task_sections(state), submission.content, self.workspace.run_ruff(include_tests=False),
+            self.task_sections(state), changes, self.workspace.run_ruff(include_tests=False),
             previous[-1].content if previous else None,
         )
         verdict = cast(str, result.parsed).removeprefix("VERDICT: ")

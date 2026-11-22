@@ -48,6 +48,7 @@ These rules exist so that the Tester agent can write reliable tests and so that 
 4. All error responses are JSON in FastAPI's default shape, for example `{"detail": "Task not found"}`.
 5. A later task must never break the behavior of an earlier task. The full test suite is run after every task.
 6. Everything under `tests/` (including `conftest.py`) is written by the Tester agent. The Coder never creates or edits tests.
+7. From the product root, both `pytest tests/` and `python -m pytest tests/` must find `app` without setting `PYTHONPATH`. Include a root `pytest.ini` with `pythonpath = .` under `[pytest]` in T01.
 
 ## 5. Data model
 
@@ -117,7 +118,7 @@ The PM may adjust this, but must keep tasks small, ordered by dependency, and at
 
 | ID | Task | Needs UI design |
 |----|------|-----------------|
-| T01 | Project skeleton, `GET /health`, `requirements.txt`, `README.md` | No |
+| T01 | Project skeleton, `GET /health`, `requirements.txt`, `README.md`, `pytest.ini` | No |
 | T02 | Database layer and `POST /tasks` (FR-2) | No |
 | T03 | `GET /tasks` and `GET /tasks/{id}` (FR-3) | No |
 | T04 | `PATCH /tasks/{id}` (FR-4) | No |

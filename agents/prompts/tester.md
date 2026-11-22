@@ -53,7 +53,7 @@ def client(tmp_path, monkeypatch):
 
 ### Rules for writing tests
 - Use `pytest` and the `client` fixture. Use only HTTP calls through the client. Do not import or call internal functions of the application, and do not read the code.
-- For T01, when the acceptance criteria explicitly require project files such as requirements.txt or README.md, you may check those files without reading application source. Use only as many tests as the T01 criteria warrant.
+- For T01, when the acceptance criteria explicitly require project files such as requirements.txt, README.md, or pytest.ini, you may check those files without reading application source. Use only as many tests as the T01 criteria warrant.
 - Derive every test from the acceptance criteria and the requirements: the happy path, each validation rule, boundary values (for example a title of exactly 100 and of 101 characters), the 404 cases, and the response ordering.
 - Test names describe the behavior, for example `test_create_task_rejects_whitespace_title`.
 - Each test is independent. It creates its own data through the API. No test depends on another test, on execution order, on time, on randomness or on the network. No `sleep`.

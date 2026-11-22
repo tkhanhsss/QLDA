@@ -98,6 +98,19 @@ class Workspace:
                     self._replace(target, original)
         self._task_originals = None
 
+    def unchanged_files(self, files: Mapping[str, str]) -> list[str]:
+        """Identify submitted files whose content matches the start of the task."""
+        originals = self._task_originals or {}
+        unchanged = []
+        for name, content in files.items():
+            target = self._target(name, Agent.CODER)
+            original = originals[target] if target in originals else (
+                target.read_bytes() if target.is_file() else None
+            )
+            if original is not None and original.replace(b"\r\n", b"\n") == content.encode("utf-8"):
+                unchanged.append(name)
+        return unchanged
+
     @staticmethod
     def _replace(target: Path, content: bytes) -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
