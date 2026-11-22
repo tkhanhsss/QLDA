@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "multi-agent-todo"
+version = "0.1.0"
+description = "A multi-agent system for building a To-do application"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1,<3",
+    "langgraph",
+    "pydantic>=2,<3",
+    "python-dotenv",
+    "rich",
+    "streamlit",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+    "pytest",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+include = ["agents", "core"]
+
+[tool.ruff]
+target-version = "py311"
+extend-exclude = ["workspace", "logs"]
